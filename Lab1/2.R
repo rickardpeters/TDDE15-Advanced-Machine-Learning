@@ -9,6 +9,11 @@
 ## true/false positives/negatives. Compare your results with those of the true Asia BN,
 ## which can be obtained by running
 
+library(bnlearn)
+library(Rgraphviz)
+library(gRain)
+library(caret)
+
 
 ##Initializing the data
 
@@ -84,3 +89,29 @@ for (i in 1:nrow(test)) {
 
 true.confusion.matrix <- confusionMatrix(as.factor(true_scores), reference=as.factor(test$S))
 
+
+################ Assignment 3
+
+##Extracting the Markov Blanket
+mb.fitted <- mb(pdag, node="S")
+
+mb.scores <- c()
+
+##Calculating the posterior probability distribution
+
+for (i in 1:nrow(test)) {
+  
+  vector_from_row <- unlist(test[i,])
+  vector <- vector_from_row[c(mb.fitted)]
+  
+  mb.object <- setEvidence(true.fitted.grain, nodes=c(mb.fitted),
+                             states=as.character(vector))
+  
+  mb.query.fit <- querygrain(mb.object, nodes=c("S"))
+  mb.scores <- c(mb.scores, ifelse(mb.query.fit[["S"]][["yes"]] > 0.5, "yes", "no"))
+  
+}
+
+##Confusion Matrix:
+
+mb.confusion.matrix <- confusionMatrix(as.factor(mb.scores), reference=as.factor(test$S))
